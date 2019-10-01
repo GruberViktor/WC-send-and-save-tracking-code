@@ -38,11 +38,11 @@ add_action( 'woocommerce_admin_order_preview_end', 'tracking_code_input', 20);
 function tracking_code_input(){
 	echo "<center>";
 	echo "<# if ( data.tracking_code ) { #><p>Tracking-Code: {{data.tracking_code}} <# } #>";
-	echo "<form name='trackingmail' id='trackingmailform' method='post' action='' autocomplete='off' >";
-	echo " <input name='code' id='code' type='text' size='20' style='margin:auto; display:inline-block; text-align:center; margin-right:10px;' autofocus/>";
-	echo "<input type='submit' value='send email' id='submittracking' />";
+	echo "<div style='margin-bottom:10px;'><form name='trackingmail' id='trackingmailform' method='post' action='' autocomplete='off' >";
+	echo "<input name='code' id='code' type='text' size='20' style='margin:auto; display:inline-block; text-align:center; margin-right:10px;' autofocus/>";
+	echo "<input type='submit' value='send email' id='submittracking' class='button wc-action-button' />";
 	echo "<input type='hidden' value={{data.data.id}}  id='order_id' />";
-	echo "</form>";
+	echo "</form></div>";
 	echo "</center>";
 }
 
@@ -63,12 +63,17 @@ function trackingmail($order){
 		$order->update_meta_data( '_tracking_code', $code );
 		$order->save();
 
+		if(get_option('wc_trackingmail_cleannames') == 'yes'){
+			$first_name = ucfirst(strtolower($order_data['billing']['first_name']));
+        	$last_name = ucfirst(strtolower($order_data['billing']['last_name']));
+		} else {
+			$first_name = $order_data['billing']['first_name'];
+        	$last_name = $order_data['billing']['last_name'];
+		}
+
         $subject = get_option('wc_trackingmail_emailsubject');
         $emailtext = get_option('wc_trackingmail_emailtext');
 
-
-        $first_name = $order_data['billing']['first_name'];
-        $last_name = $order_data['billing']['last_name'];
         $email = $order_data['billing']['email'];
 
 
@@ -179,11 +184,19 @@ public static function get_settings() {
                 'desc' => __( 'Set the subject of your email.', 'wc-send-tracking-code' ),
                 'id'   => 'wc_trackingmail_emailsubject'
             ),
+
             'emailtext' => array(
                 'name' => __( 'Email text', 'wc-send-tracking-code' ),
                 'type' => 'textarea',
                 'desc' => __( 'Here you can modify the text of your email.', 'wc-send-tracking-code' ),
                 'id'   => 'wc_trackingmail_emailtext'
+            ),
+			'cleannames' => array(
+            	'name' => __('Render names normally'),
+            	'type' => 'checkbox',
+            	'desc' => __('Transform first and last names to make all letters lower case, except the first. <br>(Sometimes people enter their names in all caps, it would look weird in the email)'),
+            	'id'   => 'wc_trackingmail_cleannames',
+            	'default' => 'yes'
             ),
             'section_end' => array(
                  'type' => 'sectionend',
